@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.weather_service.entity.Weather;
 import com.weather_service.repository.WeatherRepository;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import jakarta.annotation.PostConstruct;
 
 @RestController
