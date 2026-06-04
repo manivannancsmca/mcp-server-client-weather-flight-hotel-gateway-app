@@ -36,3 +36,19 @@ The backbone of your service infrastructure. Wait for the dashboard to become ac
 ```bash
 cd discovery-server
 mvn spring-boot:run
+
+### Case A: The Complete Travel Package (Triggers All 3 Microservices)
+
+```bash
+curl --location "http://localhost:8085/api/chat/stream?prompt=I+want+to+plan+a+weekend+trip+to+New+York.+Find+me+hotels+under+200%2C+check+if+there+are+flights+from+Chicago+to+New+York%2C+and+let+me+know+how+the+weather+looks+over+there."
+
+
+### Case B: Location Shift (Triggers Weather & Hotels for London)
+
+```bash
+curl --location "http://localhost:8085/api/chat/stream?prompt=Can+you+tell+me+if+it+is+cloudy+in+London+right+now%3F+Also+find+me+a+place+to+stay+there."
+
+### Case C: High Budget Filter (Tests Optional Query Parameters)
+
+```bash
+curl --location "http://localhost:8085/api/chat/stream?prompt=Look+up+hotels+in+London+with+a+budget+of+300+dollars+a+night."
