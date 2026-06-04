@@ -1,0 +1,20 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: mcp-client # Fixed typo here from "mcp-cient"
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:        # Added 'options' block (Standard for Spring AI configuration)
+          model: llama3.1
+    mcp:
+      client:
+        type: SYNC
+        request-timeout: 30s
+        sse:
+          connections:
+            my-mcp-server:  # This must be a clean key block
+              url: http://localhost:8086/mcp/message # The port correctly targets your server

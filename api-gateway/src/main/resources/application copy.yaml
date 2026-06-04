@@ -1,0 +1,119 @@
+server:
+  port: 8080
+
+spring:
+
+  application:
+    name: API-GATEWAY
+
+
+  cloud:
+
+    gateway:
+
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
+
+      routes:
+        # Product Service
+        - id: product-service
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/products/**
+          # filters:
+          #   - name: RequestRateLimiter
+          #     args:
+          #       redis-rate-limiter.replenishRate: 5
+          #       redis-rate-limiter.burstCapacity: 10
+          #       key-resolver: "#{@ipKeyResolver}"
+
+          #   - name: CircuitBreaker
+          #     args:
+          #       name: productServiceCircuitBreaker
+          #       fallbackUri: forward:/fallback/products
+
+          #   - name: Retry
+          #     args:
+          #       retries: 3
+          #       methods: GET
+          #       status: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+          #       backoff:
+          #         firstBackoff: 100ms
+          #         maxBackoff: 1s
+          #         factor: 2 
+
+        # Product Swagger
+        - id: product-swagger
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/product-service/v3/api-docs
+          filters:
+            - RewritePath=/product-service/(?<segment>.*), /$\{segment}
+
+        # Order Service
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/orders/*
+          # filters:
+          #   - name: RequestRateLimiter
+          #     args:
+          #       redis-rate-limiter.replenishRate: 5
+          #       redis-rate-limiter.burstCapacity: 10
+          #       key-resolver: "#{@ipKeyResolver}"
+
+          #   - name: CircuitBreaker
+          #     args:
+          #       name: productServiceCircuitBreaker
+          #       fallbackUri: forward:/fallback/orders
+
+          #   - name: Retry
+          #     args:
+          #     retries: 3
+          #     methods: GET
+          #     status: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+          #     backoff:
+          #      firstBackoff: 100ms
+          #      maxBackoff: 1s
+          #      factor: 2 
+
+        # Order Swagger
+        - id: order-swagger
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/order-service/v3/api-docs
+          filters:
+            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: product-service
+        url: /product-service/v3/api-docs
+
+      - name: order-service
+        url: /order-service/v3/api-docs
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true

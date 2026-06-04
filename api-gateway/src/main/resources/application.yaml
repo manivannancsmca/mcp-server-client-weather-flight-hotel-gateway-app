@@ -1,0 +1,94 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
+
+      routes:
+        # Product Service
+        - id: weather-service
+          uri: lb://WEATHER-SERVICE
+          predicates:
+            - Path=/weather/**
+          
+        # Product Swagger
+        - id: weather-swagger
+          uri: lb://WEATHER-SERVICE
+          predicates:
+            - Path=/weather-service/v3/api-docs
+          filters:
+            - RewritePath=/weather-service/(?<segment>.*), /$\{segment}
+
+        # Flight Service
+        - id: flight-service
+          uri: lb://FLIGHT-SERVICE
+          predicates:
+            - Path=/flights/**
+          
+        # Flight Swagger
+        - id: flight-swagger
+          uri: lb://FLIGHT-SERVICE
+          predicates:
+            - Path=/flight-service/v3/api-docs
+          filters:
+            - RewritePath=/flight-service/(?<segment>.*), /$\{segment}
+
+        # Hotel Service
+        - id: hotel-service
+          uri: lb://HOTEL-SERVICE
+          predicates:
+            - Path=/hotels/**
+          
+        # Hotel Swagger
+        - id: hotel-swagger
+          uri: lb://HOTEL-SERVICE
+          predicates:
+            - Path=/hotel-service/v3/api-docs
+          filters:
+            - RewritePath=/hotel-service/(?<segment>.*), /$\{segment}
+
+eureka:
+  instance:
+    ip-address: 127.0.0.1
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: weather-service
+        url: /weather-service/v3/api-docs
+
+      - name: flight-service
+        url: /flight-service/v3/api-docs
+
+      - name: hotel-service
+        url: /hotel-service/v3/api-docs
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
