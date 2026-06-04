@@ -21,4 +21,5 @@ public class Flight {
     private Long id;
     private String flightNumber;
     private String destination;
+    private String origin;
 }
