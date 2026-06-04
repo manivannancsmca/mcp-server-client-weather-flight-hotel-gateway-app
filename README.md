@@ -53,7 +53,7 @@ curl --location "http://localhost:8085/api/chat/stream?prompt=Can+you+tell+me+if
 ```bash
 curl --location "http://localhost:8085/api/chat/stream?prompt=Look+up+hotels+in+London+with+a+budget+of+300+dollars+a+night."
 
-
+---
 
 ### Quick Terminal Debug Commands:
 
@@ -66,3 +66,22 @@ curl "http://localhost:8080/flights/search?from=Chicago&to=New%20York"
 
 # Test Hotel route via Gateway
 curl "http://localhost:8080/hotels/search?city=New%20York&budget=100"
+
+---
+
+### 3. OpenAPI Documentation Check (Port 8080)
+
+```bash
+
+Weather API Specification Docs:
+curl "http://localhost:8080/weather-service/v3/api-docs"
+
+```bash
+
+Flight API Specification Docs:
+curl "http://localhost:8080/flight-service/v3/api-docs"
+
+```bash
+
+Hotel API Specification Docs:
+curl "http://localhost:8080/hotel-service/v3/api-docs"
