@@ -1,0 +1,160 @@
+networks:
+  microservice-network:
+    driver: bridge
+
+services:
+  # =========================================================
+  # DATABASE LAYER (Database-per-Service Isolation)
+  # =========================================================
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3307:3306" # Exposed as 3307 to Windows, stays 3306 internally
+    networks:
+      - microservice-network
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # 1. Eureka Server
+  discovery-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservice-network
+    healthcheck:
+      # -q: quiet mode (no log clutter)
+      # -O -: redirects output to stdout
+      # Checks Spring Boot's internal health status directly
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health | grep -q 'UP' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8 # Increased to 5 to give the JVM up to 50 seconds to boot up safely
+
+  # 2. API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - microservice-network
+    environment:
+      - EUREKA_HOST=discovery-server
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  # 3. Weather Service
+  weather-service:
+    build:
+      context: ./WEATHER-SERVICE
+      dockerfile: Dockerfile
+    container_name: weather-service
+    ports:
+      - "8084:8084"
+    networks:
+      - microservice-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - SPRING_DATASOURCE_HOST=mysql-db
+      - SPRING_DATASOURCE_PORT=3306 # Force internal container port connection
+      - SPRING_DATASOURCE_DB=weather_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  # 4. Flight Service
+  flight-service:
+    build:
+      context: ./FLIGHT-SERVICE
+      dockerfile: Dockerfile
+    container_name: flight-service
+    ports:
+      - "8082:8082"
+    networks:
+      - microservice-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - SPRING_DATASOURCE_HOST=mysql-db
+      - SPRING_DATASOURCE_PORT=3306 # Force internal container port connection
+      - SPRING_DATASOURCE_DB=flight_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  # 5. Hotel Service
+  hotel-service:
+    build:
+      context: ./HOTEL-SERVICE # <-- FIXED TYPO (Changed HOTER to HOTEL)
+      dockerfile: Dockerfile
+    container_name: hotel-service
+    ports:
+      - "8083:8083"
+    networks:
+      - microservice-network
+    environment:
+      - EUREKA_HOST=discovery-server
+      - SPRING_DATASOURCE_HOST=mysql-db
+      - SPRING_DATASOURCE_PORT=3306 # Force internal container port connection
+      - SPRING_DATASOURCE_DB=hotel_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  # =========================================================
+  # MONITORING TOOLS
+  # =========================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - microservice-network
+    depends_on:
+      - api-gateway
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - microservice-network
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  mysql-data:
+    driver: local
