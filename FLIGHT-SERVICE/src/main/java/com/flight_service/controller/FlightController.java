@@ -14,6 +14,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RestController
 @RequestMapping("/flights")
 public class FlightController {
@@ -31,8 +34,8 @@ public class FlightController {
         jdbcTemplate.execute("ALTER TABLE flight AUTO_INCREMENT = 1");
 
         repo.saveAll(List.of(
-                new Flight(null, "AA123", "New York"),
-                new Flight(null, "BA456", "London")));
+                new Flight(null, "AA123", "New York", "Delhi"),
+                new Flight(null, "BA456", "London", "Chennai")));
     }
 
     @GetMapping
