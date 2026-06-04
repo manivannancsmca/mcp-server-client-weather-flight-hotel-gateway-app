@@ -5,9 +5,10 @@ spring:
   application:
     name: HOTEL-SERVICE
   datasource:
-    url: jdbc:mysql://localhost:3306/hotel_db?createDatabaseIfNotExist=true&seSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    # Defaults to localhost if run outside Docker, but overrides dynamically
+    url: jdbc:mysql://${SPRING_DATASOURCE_HOST:localhost}:${SPRING_DATASOURCE_PORT:3307}/${SPRING_DATASOURCE_DB:hotel_db}?createDatabaseIfNotExist=true&seSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     hikari:
 
       pool-name: orderServiceHikariPool
@@ -46,6 +47,20 @@ management:
     web:
       exposure:
         include: "*"
+  info:
+    env:
+      enabled: true     # Allows displaying keys prefixed with "info.*"
+    java:
+      enabled: true     # Shows the container's Java version (Java 21)
+    os:
+      enabled: true     # Shows the container's operating system info (Alpine Linux)
+
+# Optional: Add custom key-value pairs that you want displayed when hitting the endpoint
+info:
+  app:
+    name: Hotel Management Microservice
+    description: Dynamic hotel search backend tracking lodging inventories.
+    version: 1.0.0
 
 eureka:
   instance:
@@ -53,4 +68,4 @@ eureka:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
