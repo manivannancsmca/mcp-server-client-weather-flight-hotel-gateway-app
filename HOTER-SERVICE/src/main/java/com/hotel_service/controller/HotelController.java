@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hotel_service.entity.Hotel;
 import com.hotel_service.repository.HotelRepository;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import jakarta.annotation.PostConstruct;
 
 @RestController
@@ -31,21 +34,28 @@ public class HotelController {
         jdbcTemplate.execute("ALTER TABLE hotel AUTO_INCREMENT = 1");
 
         hotelRepository.saveAll(List.of(
-                new Hotel(null, "Grand Hotel", "New York"),
-                new Hotel(null, "Royal Inn", "London")));
+                new Hotel(null, "Grand Hotel", "New York", 200),
+                new Hotel(null, "Royal Inn", "London", 150),
+                new Hotel(null, "Luxury Palace", "New York", 500),
+                new Hotel(null, "Budget Stay", "London", 100),
+                new Hotel(null, "Comfort Suites", "New York", 300)));
     }
 
     @GetMapping
     public List<Hotel> getAll() {
         return hotelRepository.findAll();
     }
-    
-    // NEW ENDPOINT: Matched with your WebFlux tool path: /hotels/search?city=...&budget=...
+
     @GetMapping("/search")
-    public List<Hotel> findHotels(@RequestParam String city, @RequestParam(required = false) Integer budget) {
-        return hotelRepository.findAll().stream()
-                .filter(h -> h.getCity().equalsIgnoreCase(city))
-                .filter(h -> budget == null || h.getPricePerNight() <= budget)
-                .toList();
+    public List<Hotel> findHotels(
+            @RequestParam String city,
+            @RequestParam(required = false) Integer budget) {
+
+        if (budget == null) {
+            return hotelRepository.findByCityIgnoreCase(city);
+        }
+
+        return hotelRepository
+                .findByCityIgnoreCaseAndPricePerNightLessThanEqual(city, budget);
     }
 }
