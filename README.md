@@ -52,3 +52,17 @@ curl --location "http://localhost:8085/api/chat/stream?prompt=Can+you+tell+me+if
 
 ```bash
 curl --location "http://localhost:8085/api/chat/stream?prompt=Look+up+hotels+in+London+with+a+budget+of+300+dollars+a+night."
+
+
+
+### Quick Terminal Debug Commands:
+
+```bash
+# Test Weather route via Gateway
+curl "http://localhost:8080/weather/api/v1/current?city=London"
+
+# Test Flight route via Gateway
+curl "http://localhost:8080/flights/search?from=Chicago&to=New%20York"
+
+# Test Hotel route via Gateway
+curl "http://localhost:8080/hotels/search?city=New%20York&budget=100"
